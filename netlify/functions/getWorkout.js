@@ -44,21 +44,26 @@ exports.handler = async (event, context) => {
 
 	try {
 		// Parse the POST body
-		const { date, location, program } = JSON.parse(event.body);
+		const { date } = JSON.parse(event.body);
 
 		// Validate required parameters
-		if (!date || !location || !program) {
+		if (!date) {
 			return {
 				statusCode: 400,
 				headers: corsHeaders,
-				body: JSON.stringify({ error: 'Missing required parameters' }),
+				body: JSON.stringify({ error: 'Missing date parameter' }),
 			};
 		}
 
 		const API_KEY = process.env.WODIFY_API_KEY;
+		const location = process.env.WODIFY_LOCATION_ID;
+		const program = process.env.WODIFY_PROGRAM_ID;
+
 		const fetchUrl = `https://api.wodify.com/v1/workouts/formattedworkout?date=${date}&location=${encodeURIComponent(
 			location
 		)}&program=${encodeURIComponent(program)}`;
+
+		console.log('Fetching from URL:', fetchUrl); // Debug log
 
 		const response = await fetch(fetchUrl, {
 			headers: {
@@ -67,6 +72,9 @@ exports.handler = async (event, context) => {
 		});
 
 		const data = await response.json();
+
+		// Debug log
+		console.log('Wodify API Response:', data);
 
 		return {
 			statusCode: 200,
