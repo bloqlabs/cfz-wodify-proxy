@@ -1,17 +1,34 @@
 exports.handler = async (event, context) => {
 	// Get allowed origins from environment variable
-	const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
+	const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((origin) =>
+		origin.trim()
+	);
 	const origin = event.headers.origin;
+
+	// Set common CORS headers
+	const corsHeaders = {
+		'Access-Control-Allow-Origin': allowedOrigins.includes(origin)
+			? origin
+			: '',
+		'Access-Control-Allow-Methods': 'POST, OPTIONS',
+		'Access-Control-Allow-Headers': 'Content-Type',
+		'Access-Control-Max-Age': '86400',
+	};
+
+	// Handle preflight requests
+	if (event.httpMethod === 'OPTIONS') {
+		return {
+			statusCode: 200,
+			headers: corsHeaders,
+			body: '',
+		};
+	}
 
 	// Check HTTP method
 	if (event.httpMethod !== 'POST') {
 		return {
 			statusCode: 405,
-			headers: {
-				'Access-Control-Allow-Origin': allowedOrigins.includes(origin)
-					? origin
-					: '',
-			},
+			headers: corsHeaders,
 			body: JSON.stringify({ error: 'Method not allowed' }),
 		};
 	}
@@ -20,6 +37,7 @@ exports.handler = async (event, context) => {
 	if (!allowedOrigins.includes(origin)) {
 		return {
 			statusCode: 403,
+			headers: corsHeaders,
 			body: JSON.stringify({ error: 'Origin not allowed' }),
 		};
 	}
@@ -32,9 +50,7 @@ exports.handler = async (event, context) => {
 		if (!date || !location || !program) {
 			return {
 				statusCode: 400,
-				headers: {
-					'Access-Control-Allow-Origin': origin,
-				},
+				headers: corsHeaders,
 				body: JSON.stringify({ error: 'Missing required parameters' }),
 			};
 		}
@@ -55,47 +71,20 @@ exports.handler = async (event, context) => {
 		return {
 			statusCode: 200,
 			headers: {
+				...corsHeaders,
 				'Content-Type': 'application/json',
-				'Access-Control-Allow-Origin': origin,
-				'Access-Control-Allow-Methods': 'POST',
-				'Access-Control-Allow-Headers': 'Content-Type',
 			},
 			body: JSON.stringify(data),
 		};
 	} catch (error) {
+		console.error('Error:', error);
 		return {
 			statusCode: 500,
-			headers: {
-				'Access-Control-Allow-Origin': origin,
-			},
+			headers: corsHeaders,
 			body: JSON.stringify({
 				error: 'Failed to fetch workout data',
 				details: error.message,
 			}),
 		};
 	}
-};
-
-// Handle OPTIONS requests for CORS
-exports.handler.options = async (event) => {
-	const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
-	const origin = event.headers.origin;
-
-	if (!allowedOrigins.includes(origin)) {
-		return {
-			statusCode: 403,
-			body: '',
-		};
-	}
-
-	return {
-		statusCode: 204,
-		headers: {
-			'Access-Control-Allow-Origin': origin,
-			'Access-Control-Allow-Methods': 'POST',
-			'Access-Control-Allow-Headers': 'Content-Type',
-			'Access-Control-Max-Age': '86400',
-		},
-		body: '',
-	};
 };
