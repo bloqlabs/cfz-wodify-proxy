@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 exports.handler = async (event, context) => {
 	// Get allowed origins from environment variable
 	const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
