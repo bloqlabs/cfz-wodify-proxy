@@ -1,7 +1,7 @@
 exports.handler = async (event, context) => {
   // Get allowed origins from environment variable
   const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",").map((origin) =>
-    origin.trim()
+    origin.trim(),
   );
   const origin = event.headers.origin;
 
@@ -60,7 +60,7 @@ exports.handler = async (event, context) => {
     const program = process.env.WODIFY_PROGRAM_ID;
 
     const fetchUrl = `https://api.wodify.com/v1/workouts/formattedworkout?date=${date}&location=${encodeURIComponent(
-      location
+      location,
     )}&program=${encodeURIComponent(program)}`;
 
     console.log("Fetching from URL:", fetchUrl); // Debug log
